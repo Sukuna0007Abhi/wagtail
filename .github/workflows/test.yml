@@ -70,8 +70,18 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          pip install "django-tasks>=0.11.0,<0.12"
           pip install -e '.[testing]' --config-settings editable_mode=strict
           pip install "${{ matrix.django }}"
+      - name: Check django-tasks version
+        run: |
+          python - <<'PY'
+          from packaging.version import Version
+          import pkg_resources
+          v = pkg_resources.get_distribution("django-tasks").version
+          assert Version(v) >= Version("0.11.0"), f"django-tasks {v} is too old; CI requires >=0.11.0"
+          print("django-tasks OK:", v)
+          PY
       - name: Test
         run: |
           WAGTAIL_FAIL_ON_VERSIONED_STATIC=1 DJANGO_SETTINGS_MODULE=wagtail.test.settings django-admin check
@@ -138,10 +148,20 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          pip install "django-tasks>=0.11.0,<0.12"
           pip install "${{ matrix.psycopg }}"
           pip install -e '.[testing]' --config-settings editable_mode=strict
           pip install "${{ matrix.django }}"
           ${{ matrix.install_extras }}
+      - name: Check django-tasks version
+        run: |
+          python - <<'PY'
+          from packaging.version import Version
+          import pkg_resources
+          v = pkg_resources.get_distribution("django-tasks").version
+          assert Version(v) >= Version("0.11.0"), f"django-tasks {v} is too old; CI requires >=0.11.0"
+          print("django-tasks OK:", v)
+          PY
       - name: Test
         run: |
           WAGTAIL_FAIL_ON_VERSIONED_STATIC=1 DJANGO_SETTINGS_MODULE=wagtail.test.settings django-admin check
@@ -226,9 +246,19 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          pip install "django-tasks>=0.11.0,<0.12"
           pip install mysqlclient
           pip install -e '.[testing]' --config-settings editable_mode=strict
           pip install "${{ matrix.django }}"
+      - name: Check django-tasks version
+        run: |
+          python - <<'PY'
+          from packaging.version import Version
+          import pkg_resources
+          v = pkg_resources.get_distribution("django-tasks").version
+          assert Version(v) >= Version("0.11.0"), f"django-tasks {v} is too old; CI requires >=0.11.0"
+          print("django-tasks OK:", v)
+          PY
       - name: Test
         run: |
           WAGTAIL_FAIL_ON_VERSIONED_STATIC=1 DJANGO_SETTINGS_MODULE=wagtail.test.settings django-admin check
@@ -281,10 +311,20 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          pip install "django-tasks>=0.11.0,<0.12"
           pip install -e '.[testing]' --config-settings editable_mode=strict
           pip install "${{ matrix.django }}"
           pip install "elasticsearch>=8,<9"
           pip install certifi
+      - name: Check django-tasks version
+        run: |
+          python - <<'PY'
+          from packaging.version import Version
+          import pkg_resources
+          v = pkg_resources.get_distribution("django-tasks").version
+          assert Version(v) >= Version("0.11.0"), f"django-tasks {v} is too old; CI requires >=0.11.0"
+          print("django-tasks OK:", v)
+          PY
       - name: Test
         run: |
           coverage run --parallel-mode --source wagtail runtests.py wagtail.documents wagtail.images wagtail.tests.test_page_search --elasticsearch8
@@ -339,11 +379,21 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          pip install "django-tasks>=0.11.0,<0.12"
           pip install "psycopg2>=2.6"
           pip install -e '.[testing]' --config-settings editable_mode=strict
           pip install "${{ matrix.django }}"
           pip install "elasticsearch>=7,<8"
           pip install certifi
+      - name: Check django-tasks version
+        run: |
+          python - <<'PY'
+          from packaging.version import Version
+          import pkg_resources
+          v = pkg_resources.get_distribution("django-tasks").version
+          assert Version(v) >= Version("0.11.0"), f"django-tasks {v} is too old; CI requires >=0.11.0"
+          print("django-tasks OK:", v)
+          PY
       - name: Test
         run: |
           coverage run --parallel-mode --source wagtail runtests.py wagtail.documents wagtail.images wagtail.tests.test_page_search --elasticsearch7
@@ -391,10 +441,20 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          pip install "django-tasks>=0.11.0,<0.12"
           pip install -e '.[testing]' --config-settings editable_mode=strict
           pip install "${{ matrix.django }}"
           pip install "opensearch-py>=2,<3"
           pip install certifi
+      - name: Check django-tasks version
+        run: |
+          python - <<'PY'
+          from packaging.version import Version
+          import pkg_resources
+          v = pkg_resources.get_distribution("django-tasks").version
+          assert Version(v) >= Version("0.11.0"), f"django-tasks {v} is too old; CI requires >=0.11.0"
+          print("django-tasks OK:", v)
+          PY
       - name: Test
         run: |
           coverage run --parallel-mode --source wagtail runtests.py wagtail.documents wagtail.images wagtail.tests.test_page_search --opensearch2
