@@ -59,6 +59,21 @@ class UserColumn(TitleColumn):
     cell_template_name = "wagtailusers/users/user_cell.html"
 
 
+class GroupsColumn(Column):
+    """Column to display user groups as styled tags."""
+
+    cell_template_name = "wagtailusers/users/groups_cell.html"
+
+    def get_value(self, instance):
+        """Return a list of dicts with group info for the template."""
+        groups = []
+        if instance.is_superuser:
+            groups.append({"name": str(gettext_lazy("Admin")), "is_admin": True})
+        for group in instance.groups.all():
+            groups.append({"name": group.name, "is_admin": False})
+        return groups
+
+
 class GroupFilter(RelatedFilterMixin, django_filters.ModelMultipleChoiceFilter):
     pass
 
@@ -137,13 +152,11 @@ class IndexView(generic.IndexView):
                 classname="username",
                 width="20%",
             ),
-            Column(
-                "is_superuser",
-                accessor=lambda u: gettext_lazy("Admin") if u.is_superuser else None,
+            GroupsColumn(
+                "groups",
                 label=gettext_lazy("Access level"),
-                sort_key="is_superuser",
                 classname="level",
-                width="10%",
+                width="15%",
             ),
             BooleanColumn(
                 "is_active",
@@ -222,6 +235,16 @@ class IndexView(generic.IndexView):
             users = users.select_related("wagtail_userprofile")
 
         return users
+
+    def paginate_queryset(self, queryset, page_size):
+        # Prefetch groups to avoid N+1 queries when displaying group memberships.
+        # This is done here rather than in get_base_queryset because:
+        # 1. SearchResults objects don't support prefetch_related
+        # 2. RelatedFilterMixin with use_subquery=True calls values_list()
+        #    which is incompatible with prefetch_related
+        if callable(getattr(queryset, "prefetch_related", None)):
+            queryset = queryset.prefetch_related("groups")
+        return super().paginate_queryset(queryset, page_size)
 
     def order_queryset(self, queryset):
         if self.ordering == "name":

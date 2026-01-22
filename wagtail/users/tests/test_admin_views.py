@@ -200,16 +200,15 @@ class TestUserIndexView(AdminTemplateTestUtils, WagtailTestUtils, TestCase):
         # ordering fields are:
         # - `name`: maps to `User.last_name` and `User.first_name` fields if available
         # - `User.USERNAME_FIELD`: dynamically maps to User.USERNAME_FIELD
-        # - `is_superuser`: maps to User.is_superuser (from PermissionsMixin)
         # - `is_active`: maps to User.is_active if available
         # - `last_login`: maps to User.last_login (from AbstractBaseUser)
+        # Note: `is_superuser` is no longer sortable as the Access level column
+        # now displays group memberships which cannot be sorted
         cases = {
             "name": ("last_name", "first_name"),
             "-name": ("-last_name", "-first_name"),
             User.USERNAME_FIELD: (User.USERNAME_FIELD,),
             f"-{User.USERNAME_FIELD}": (f"-{User.USERNAME_FIELD}",),
-            "is_superuser": ("is_superuser",),
-            "-is_superuser": ("-is_superuser",),
             "is_active": ("is_active",),
             "-is_active": ("-is_active",),
             "last_login": ("last_login",),
@@ -294,7 +293,7 @@ class TestUserIndexView(AdminTemplateTestUtils, WagtailTestUtils, TestCase):
         # Warm up
         self.get()
 
-        num_queries = 10
+        num_queries = 11
         with self.assertNumQueries(num_queries):
             self.get()
 
@@ -302,6 +301,37 @@ class TestUserIndexView(AdminTemplateTestUtils, WagtailTestUtils, TestCase):
         self.create_user("test", "test@example.com", "gu@rd14n")
         with self.assertNumQueries(num_queries):
             self.get()
+
+    def test_access_level_column_displays_groups(self):
+        """Test that the Access level column displays group memberships."""
+        # Create some groups
+        editors, _ = Group.objects.get_or_create(name="Editors")
+        moderators, _ = Group.objects.get_or_create(name="Moderators")
+
+        # Add test_user to groups
+        self.test_user.groups.add(editors, moderators)
+
+        response = self.get()
+        self.assertEqual(response.status_code, 200)
+
+        # The logged-in user is a superuser, so should show "Admin"
+        self.assertContains(response, "Admin")
+
+        # The test_user should show their groups
+        self.assertContains(response, "Editors")
+        self.assertContains(response, "Moderators")
+
+    def test_access_level_column_shows_admin_and_groups(self):
+        """Test that superusers show both Admin and their groups."""
+        publishers, _ = Group.objects.get_or_create(name="Publishers")
+        self.user.groups.add(publishers)
+
+        response = self.get()
+        self.assertEqual(response.status_code, 200)
+
+        # The superuser should show "Admin" and their group
+        self.assertContains(response, "Admin")
+        self.assertContains(response, "Publishers")
 
     def test_default_buttons(self):
         response = self.get()
